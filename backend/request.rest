@@ -1,0 +1,155 @@
+### ==============================================
+### HIMAKEU FINANCE API - REST REQUESTS
+### Server: http://localhost:3000
+### ==============================================
+
+### Health Check
+GET http://localhost:3000/api/health
+
+### ==============================================
+### AUTHENTICATION ENDPOINTS
+### ==============================================
+
+### Register New Member
+POST http://localhost:3000/api/auth/register
+Content-Type: application/json
+
+{
+  "nim": "202310110001",
+  "fullName": "Malik Ahmad",
+  "email": "malik@himakeu.com",
+  "phone": "081234567890",
+  "department": "Teknik Informatika",
+  "yearJoined": 2023,
+  "username": "malikaaaa77",
+  "password": "himakeu2025"
+}
+
+### Register Second User (for testing)
+POST http://localhost:3000/api/auth/register
+Content-Type: application/json
+
+{
+  "nim": "202310110002",
+  "fullName": "Test Member",
+  "email": "test@himakeu.com",
+  "phone": "081234567891",
+  "department": "Sistem Informasi",
+  "yearJoined": 2023,
+  "username": "testmember",
+  "password": "test123"
+}
+
+### Login User
+POST http://localhost:3000/api/auth/login
+Content-Type: application/json
+
+{
+  "username": "malikaaaa77",
+  "password": "himakeu2025"
+}
+
+### Login Test Member
+POST http://localhost:3000/api/auth/login
+Content-Type: application/json
+
+{
+  "username": "testmember",
+  "password": "test123"
+}
+
+### Get User Profile (requires login session)
+GET http://localhost:3000/api/auth/profile
+
+### Logout
+POST http://localhost:3000/api/auth/logout
+
+### ==============================================
+### ERROR TESTING
+### ==============================================
+
+### Test Registration with Missing Fields
+POST http://localhost:3000/api/auth/register
+Content-Type: application/json
+
+{
+  "nim": "123456789",
+  "fullName": "Incomplete User"
+}
+
+### Test Login with Wrong Credentials
+POST http://localhost:3000/api/auth/login
+Content-Type: application/json
+
+{
+  "username": "wronguser",
+  "password": "wrongpass"
+}
+
+### Test 404 Route
+GET http://localhost:3000/api/nonexistent
+
+### ==============================================
+### MEMBER ENDPOINTS (Protected)
+### ==============================================
+
+### Member Dashboard (requires member login)
+GET http://localhost:3000/api/member/dashboard
+
+### Upload Payment Proof (requires member login)
+POST http://localhost:3000/api/member/upload-payment
+Content-Type: application/json
+
+{
+  "period": "2025-01",
+  "description": "Iuran Januari 2025"
+}
+
+### Get Payment History (requires member login)
+GET http://localhost:3000/api/member/payment-history
+
+### ==============================================
+### ADMIN ENDPOINTS (Protected)
+### ==============================================
+
+### Admin Dashboard (requires admin login)
+GET http://localhost:3000/api/admin/dashboard
+
+### Get Pending Approvals (requires admin login)
+GET http://localhost:3000/api/admin/pending-approvals
+
+### Approve Payment (requires admin login)
+POST http://localhost:3000/api/admin/approve-payment
+Content-Type: application/json
+
+{
+  "transactionId": "TRX1234567890",
+  "action": "approve",
+  "notes": "Payment verified and approved"
+}
+
+### Add Expense (requires admin login)
+POST http://localhost:3000/api/admin/add-expense
+Content-Type: application/json
+
+{
+  "amount": 100000,
+  "description": "Pembelian ATK untuk sekretariat",
+  "categoryId": 2
+}
+
+### ==============================================
+### TRANSACTION ENDPOINTS
+### ==============================================
+
+### Get All Transactions (admin only)
+GET http://localhost:3000/api/transaction?page=1&limit=10
+
+### Get Transactions by Status
+GET http://localhost:3000/api/transaction?status=pending
+
+### Get Transactions by Type
+GET http://localhost:3000/api/transaction?type=income
+
+### Get Specific Transaction
+GET http://localhost:3000/api/transaction/TRX1234567890
