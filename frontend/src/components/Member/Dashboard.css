@@ -1,0 +1,234 @@
+.member-dashboard {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.dashboard-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: var(--spacing-lg);
+  margin-bottom: var(--spacing-2xl);
+}
+
+.stat-card {
+  background: var(--surface-color);
+  padding: var(--spacing-xl);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-lg);
+  transition: transform var(--transition-fast);
+}
+
+.stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.stat-icon {
+  font-size: 2.5rem;
+  width: 80px;
+  height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-xl);
+  flex-shrink: 0;
+}
+
+.stat-icon.payment-status {
+  background: rgba(37, 99, 235, 0.1);
+}
+
+.stat-icon.dues {
+  background: rgba(16, 163, 74, 0.1);
+}
+
+.stat-icon.total {
+  background: rgba(217, 119, 6, 0.1);
+}
+
+.stat-icon.pending {
+  background: rgba(220, 38, 38, 0.1);
+}
+
+.stat-content h3 {
+  margin: 0 0 var(--spacing-sm) 0;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.stat-content .amount {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.stat-content .status {
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--radius-sm);
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.status.paid {
+  background: var(--success-light);
+  color: var(--success-color);
+}
+
+.status.pending {
+  background: var(--warning-light);
+  color: var(--warning-color);
+}
+
+.status.overdue {
+  background: var(--danger-light);
+  color: var(--danger-color);
+}
+
+.stat-content .count {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.dashboard-content {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: var(--spacing-2xl);
+}
+
+.recent-payments,
+.quick-actions {
+  background: var(--surface-color);
+  padding: var(--spacing-xl);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+}
+
+.recent-payments h3,
+.quick-actions h3 {
+  margin-bottom: var(--spacing-lg);
+  color: var(--text-primary);
+}
+
+.payments-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.payment-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-md);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  transition: all var(--transition-fast);
+}
+
+.payment-item:hover {
+  border-color: var(--primary-color);
+  box-shadow: var(--shadow-sm);
+}
+
+.payment-info h4 {
+  margin: 0 0 var(--spacing-xs) 0;
+  font-size: 0.875rem;
+  color: var(--text-primary);
+}
+
+.payment-info p {
+  margin: 0;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+.payment-status {
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--radius-sm);
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-transform: uppercase;
+}
+
+.payment-status.approved {
+  background: var(--success-light);
+  color: var(--success-color);
+}
+
+.payment-status.pending {
+  background: var(--warning-light);
+  color: var(--warning-color);
+}
+
+.payment-status.rejected {
+  background: var(--danger-light);
+  color: var(--danger-color);
+}
+
+.actions-grid {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.action-btn {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  padding: var(--spacing-md);
+  background: var(--surface-color);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  text-decoration: none;
+  color: var(--text-primary);
+  transition: all var(--transition-fast);
+  cursor: pointer;
+}
+
+.action-btn:hover {
+  border-color: var(--primary-color);
+  background: rgba(37, 99, 235, 0.05);
+}
+
+.action-btn.pay-dues {
+  border-color: var(--success-color);
+  color: var(--success-color);
+}
+
+.action-btn.pay-dues:hover {
+  background: var(--success-light);
+}
+
+.btn-icon {
+  font-size: 1.25rem;
+}
+
+@media (max-width: 768px) {
+  .dashboard-stats {
+    grid-template-columns: 1fr;
+  }
+  
+  .dashboard-content {
+    grid-template-columns: 1fr;
+  }
+  
+  .stat-card {
+    padding: var(--spacing-lg);
+  }
+  
+  .stat-icon {
+    width: 60px;
+    height: 60px;
+    font-size: 2rem;
+  }
+}

@@ -40,6 +40,15 @@ Content-Type: application/json
   "password": "test123"
 }
 
+### Login Admin User
+POST http://localhost:3000/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@himakeu.com",
+  "password": "admin123"
+}
+
 ### Login User
 POST http://localhost:3000/api/auth/login
 Content-Type: application/json

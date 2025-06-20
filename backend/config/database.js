@@ -1,139 +1,104 @@
 // config/database.js - Dual Database Version
 const mysql = require('mysql2/promise');
 const { Pool } = require('pg');
-require('dotenv').config();
 
-// MySQL Configuration (Transactions)
+// MySQL Configuration - Sesuaikan nama variable
 const mysqlConfig = {
-  host: process.env.MYSQL_HOST || '127.0.0.1',
+  host: process.env.MYSQL_HOST || 'localhost',
+  user: process.env.MYSQL_USER || 'root',
+  password: process.env.MYSQL_PASSWORD || '', // Kosong sesuai setup Anda
+  database: process.env.MYSQL_DATABASE || 'himakeu_transactions', // Fixed: MYSQL_DATABASE bukan MYSQL_DB
   port: process.env.MYSQL_PORT || 3306,
-  user: process.env.MYSQL_USER || 'himakeu_user',
-  password: process.env.MYSQL_PASS || '',
-  database: process.env.MYSQL_DB || 'himakeu_transactions',
   waitForConnections: true,
   connectionLimit: 10,
-  queueLimit: 0,
-  acquireTimeout: 60000,
-  timeout: 60000,
-  timezone: '+00:00' // UTC
+  queueLimit: 0
 };
 
-// PostgreSQL Configuration (Master Data)
+// PostgreSQL Configuration - Sesuaikan nama variable  
 const postgresConfig = {
-  host: process.env.POSTGRES_HOST || '127.0.0.1',
+  host: process.env.POSTGRES_HOST || 'localhost',
+  user: process.env.POSTGRES_USER || 'postgres',
+  password: process.env.POSTGRES_PASSWORD || 'admin123', // Sesuai setup Anda
+  database: process.env.POSTGRES_DATABASE || 'himakeu_master', // Fixed: POSTGRES_DATABASE bukan POSTGRES_DB
   port: process.env.POSTGRES_PORT || 5432,
-  user: process.env.POSTGRES_USER || 'himakeu_user',
-  password: process.env.POSTGRES_PASS || '',
-  database: process.env.POSTGRES_DB || 'himakeu_master',
   max: 10,
   idleTimeoutMillis: 30000,
   connectionTimeoutMillis: 2000
 };
 
-// Create connection pools
+// Debug log untuk memastikan kredensial benar
+console.log('🔧 Database Configuration:');
+console.log('MySQL:', {
+  host: mysqlConfig.host,
+  user: mysqlConfig.user,
+  password: mysqlConfig.password ? '***' : '(empty)',
+  database: mysqlConfig.database
+});
+console.log('PostgreSQL:', {
+  host: postgresConfig.host,
+  user: postgresConfig.user,
+  password: postgresConfig.password ? '***' : '(empty)',
+  database: postgresConfig.database
+});
+
+// Create MySQL connection pool
 const mysqlPool = mysql.createPool(mysqlConfig);
+
+// Create PostgreSQL connection pool
 const postgresPool = new Pool(postgresConfig);
 
-// Test database connections
+// Test connections
 const testConnections = async () => {
+  console.log('📊 Testing database connections...');
+  
   try {
-    console.log('📊 Testing database connections...');
-    
-    // Test MySQL (Transactions)
     console.log('🔍 Testing MySQL (Transactions)...');
-    const [mysqlResult] = await mysqlPool.execute('SELECT 1 as test, "transactions" as db_purpose');
-    if (mysqlResult[0].test === 1) {
-      console.log('✅ MySQL connected successfully (Transactions Database)');
-    }
+    const mysqlConnection = await mysqlPool.getConnection();
+    await mysqlConnection.ping();
+    mysqlConnection.release();
+    console.log('✅ MySQL connected successfully (Transactions Database)');
+  } catch (error) {
+    console.error('❌ MySQL connection failed:', error.message);
+    console.log('💡 Check: MySQL server running? Database exists? User has access?');
+  }
 
-    // Test PostgreSQL (Master Data)
+  try {
     console.log('🔍 Testing PostgreSQL (Master Data)...');
-    const postgresResult = await postgresPool.query('SELECT 1 as test, \'master_data\' as db_purpose');
-    if (postgresResult.rows[0].test === 1) {
-      console.log('✅ PostgreSQL connected successfully (Master Data Database)');
-    }
-
-    console.log('✅ All database connections established');
-    console.log('🏗️  Architecture: MySQL (Transactions) + PostgreSQL (Master Data)');
-    return true;
-
+    const client = await postgresPool.connect();
+    await client.query('SELECT NOW()');
+    client.release();
+    console.log('✅ PostgreSQL connected successfully (Master Data Database)');
   } catch (error) {
-    console.error('❌ Database connection failed:', error);
-    console.log('⚠️  Warning: Database connection failed, but server will start anyway');
-    return false;
+    console.error('❌ PostgreSQL connection failed:', error.message);
+    console.log('💡 Check: PostgreSQL server running? Database exists? Password correct?');
   }
+
+  console.log('🏗️  Architecture: MySQL (Transactions) + PostgreSQL (Master Data)');
 };
 
-// Test individual connections (untuk debugging)
-const testMysqlConnection = async () => {
-  try {
-    const [result] = await mysqlPool.execute('SELECT NOW() as current_time, DATABASE() as database_name');
-    console.log('MySQL Test:', result[0]);
-    return true;
-  } catch (error) {
-    console.error('MySQL Test Failed:', error.message);
-    return false;
-  }
-};
-
-const testPostgresConnection = async () => {
-  try {
-    const result = await postgresPool.query('SELECT NOW() as current_time, current_database() as database_name');
-    console.log('PostgreSQL Test:', result.rows[0]);
-    return true;
-  } catch (error) {
-    console.error('PostgreSQL Test Failed:', error.message);
-    return false;
-  }
-};
-
-// Graceful shutdown
-const closeConnections = async () => {
-  try {
-    console.log('🔄 Closing database connections...');
-    
-    await mysqlPool.end();
-    console.log('✅ MySQL connection pool closed');
-    
-    await postgresPool.end();
-    console.log('✅ PostgreSQL connection pool closed');
-    
-  } catch (error) {
-    console.error('Error closing connections:', error);
-  }
-};
-
-// Connection health check
+// Health check function
 const healthCheck = async () => {
   const status = {
-    mysql: { connected: false, latency: null },
-    postgres: { connected: false, latency: null }
+    mysql: false,
+    postgres: false
   };
 
   try {
-    // MySQL health check
-    const mysqlStart = Date.now();
-    await mysqlPool.execute('SELECT 1');
-    status.mysql = {
-      connected: true,
-      latency: Date.now() - mysqlStart,
-      database: mysqlConfig.database
-    };
+    const mysqlConnection = await mysqlPool.getConnection();
+    await mysqlConnection.ping();
+    mysqlConnection.release();
+    status.mysql = true;
   } catch (error) {
-    status.mysql.error = error.message;
+    status.mysql = false;
   }
 
   try {
-    // PostgreSQL health check
-    const postgresStart = Date.now();
-    await postgresPool.query('SELECT 1');
-    status.postgres = {
-      connected: true,
-      latency: Date.now() - postgresStart,
-      database: postgresConfig.database
-    };
+    const client = await postgresPool.connect();
+    await client.query('SELECT NOW()');
+    client.release();
+    status.postgres = true;
   } catch (error) {
-    status.postgres.error = error.message;
+    status.postgres = false;
   }
 
   return status;
@@ -143,8 +108,5 @@ module.exports = {
   mysql: mysqlPool,
   postgres: postgresPool,
   testConnections,
-  testMysqlConnection,
-  testPostgresConnection,
-  closeConnections,
   healthCheck
 };

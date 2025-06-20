@@ -1,0 +1,123 @@
+.data-table-container {
+  background: var(--surface-color);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.data-table th {
+  background: var(--background-color);
+  padding: var(--spacing-md) var(--spacing-lg);
+  text-align: left;
+  font-weight: 600;
+  color: var(--text-primary);
+  border-bottom: 1px solid var(--border-color);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.data-table th.sortable {
+  cursor: pointer;
+  user-select: none;
+}
+
+.data-table th.sortable:hover {
+  background: #f1f5f9;
+}
+
+.th-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.sort-icon {
+  margin-left: var(--spacing-sm);
+  color: var(--text-light);
+  font-size: 0.75rem;
+}
+
+.data-table td {
+  padding: var(--spacing-md) var(--spacing-lg);
+  border-bottom: 1px solid var(--border-color);
+  color: var(--text-secondary);
+}
+
+.data-table tr:hover {
+  background: var(--background-color);
+}
+
+.data-table tr:last-child td {
+  border-bottom: none;
+}
+
+.no-data {
+  text-align: center;
+  padding: var(--spacing-2xl);
+  color: var(--text-light);
+  font-style: italic;
+}
+
+.pagination {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-lg);
+  border-top: 1px solid var(--border-color);
+  background: var(--background-color);
+}
+
+.pagination-btn {
+  background: var(--surface-color);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.pagination-btn:hover:not(:disabled) {
+  background: var(--primary-color);
+  color: white;
+  border-color: var(--primary-color);
+}
+
+.pagination-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.pagination-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-xs);
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+}
+
+@media (max-width: 768px) {
+  .data-table-container {
+    overflow-x: auto;
+  }
+  
+  .data-table {
+    min-width: 600px;
+  }
+  
+  .pagination {
+    flex-direction: column;
+    gap: var(--spacing-md);
+  }
+  
+  .pagination-info {
+    order: -1;
+  }
+}

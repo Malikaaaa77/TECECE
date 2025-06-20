@@ -1,6 +1,7 @@
 // middleware/auth.js
+const db = require('../config/database');
 
-// Check if user is authenticated
+// Check if user is authenticated via session
 const requireAuth = (req, res, next) => {
   if (!req.session || !req.session.user) {
     return res.status(401).json({
@@ -8,6 +9,9 @@ const requireAuth = (req, res, next) => {
       message: 'Authentication required. Please login first.'
     });
   }
+  
+  // Make user accessible as req.user for consistency
+  req.user = req.session.user;
   next();
 };
 
@@ -28,6 +32,8 @@ const requireRole = (role) => {
       });
     }
 
+    // Make user accessible as req.user
+    req.user = req.session.user;
     next();
   };
 };
@@ -44,8 +50,15 @@ const requireMember = (req, res, next) => {
 
 // Optional auth - doesn't fail if not authenticated
 const optionalAuth = (req, res, next) => {
-  // Just pass through, controller can check req.session.user if needed
+  if (req.session && req.session.user) {
+    req.user = req.session.user;
+  }
   next();
+};
+
+// Default auth middleware (session-based, bukan JWT)
+const auth = (req, res, next) => {
+  return requireAuth(req, res, next);
 };
 
 module.exports = {
@@ -53,5 +66,15 @@ module.exports = {
   requireRole,
   requireAdmin,
   requireMember,
-  optionalAuth
+  optionalAuth,
+  auth // Default ke session-based
 };
+
+// For backward compatibility - export default as requireAuth
+module.exports = requireAuth;
+module.exports.requireAuth = requireAuth;
+module.exports.requireRole = requireRole;
+module.exports.requireAdmin = requireAdmin;
+module.exports.requireMember = requireMember;
+module.exports.optionalAuth = optionalAuth;
+module.exports.auth = requireAuth; // Alias

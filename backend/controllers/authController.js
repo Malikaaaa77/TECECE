@@ -5,163 +5,191 @@ const { postgres } = require('../config/database');
 // Register new member
 const register = async (req, res) => {
   try {
-    const {
-      nim, fullName, email, phone, department,
-      yearJoined, username, password
-    } = req.body;
+    console.log('📝 Registration request:', req.body);
+    
+    const { name, nim, email, faculty, batch, password, role = 'member' } = req.body;
 
-    // Basic validation
-    if (!nim || !fullName || !email || !department || !yearJoined || !username || !password) {
+    // Validation
+    if (!name || !nim || !email || !faculty || !batch || !password) {
       return res.status(400).json({
         success: false,
-        message: 'All required fields must be filled'
+        message: 'All fields are required',
+        missing_fields: {
+          name: !name,
+          nim: !nim,
+          email: !email,
+          faculty: !faculty,
+          batch: !batch,
+          password: !password
+        }
       });
     }
 
-    // Check if NIM already exists
-    const nimCheck = await postgres.query(
-      'SELECT id FROM members WHERE nim = $1',
-      [nim]
-    );
-
-    if (nimCheck.rows.length > 0) {
+    // Email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
       return res.status(400).json({
         success: false,
-        message: 'NIM already registered'
+        message: 'Please enter a valid email address'
       });
     }
 
-    // Check if email already exists
-    const emailCheck = await postgres.query(
-      'SELECT id FROM members WHERE email = $1',
-      [email]
-    );
-
-    if (emailCheck.rows.length > 0) {
+    // Password validation
+    if (password.length < 6) {
       return res.status(400).json({
         success: false,
-        message: 'Email already registered'
+        message: 'Password must be at least 6 characters long'
       });
     }
 
-    // Check if username already exists
-    const usernameCheck = await postgres.query(
-      'SELECT id FROM users WHERE username = $1',
-      [username]
+    // Check if user already exists
+    const existingUser = await postgres.query(
+      'SELECT id FROM members WHERE email = $1 OR nim = $2',
+      [email, nim]
     );
 
-    if (usernameCheck.rows.length > 0) {
+    if (existingUser.rows.length > 0) {
       return res.status(400).json({
         success: false,
-        message: 'Username already taken'
+        message: 'User with this email or NIM already exists'
       });
     }
 
     // Hash password
-    const passwordHash = await bcrypt.hash(password, 10);
+    const hashedPassword = await bcrypt.hash(password, 12);
 
-    // Insert member first
+    // Insert into PostgreSQL (members table)
     const memberResult = await postgres.query(
-      `INSERT INTO members (nim, full_name, email, phone, department, year_joined, status, created_at, updated_at) 
-       VALUES ($1, $2, $3, $4, $5, $6, 'active', NOW(), NOW()) RETURNING id`,
-      [nim, fullName, email, phone, department, yearJoined]
+      `INSERT INTO members (nim, full_name, email, department, year_joined, status, created_at) 
+       VALUES ($1, $2, $3, $4, $5, 'active', NOW()) 
+       RETURNING id`,
+      [nim, name, email, faculty, batch]
     );
 
     const memberId = memberResult.rows[0].id;
 
-    // Insert user (always as 'member' role)
+    // Insert into users table for authentication
     await postgres.query(
-      `INSERT INTO users (member_id, username, password_hash, role, created_at, updated_at) 
-       VALUES ($1, $2, $3, 'member', NOW(), NOW())`,
-      [memberId, username, passwordHash]
+      `INSERT INTO users (member_id, username, password_hash, role, created_at)
+       VALUES ($1, $2, $3, $4, NOW())`,
+      [memberId, email, hashedPassword, role]
     );
+
+    console.log('✅ User registered successfully:', name);
 
     res.status(201).json({
       success: true,
-      message: 'Registration successful! Please login with your credentials.'
+      message: 'Registration successful! You can now login.',
+      user: {
+        id: memberId,
+        name,
+        email,
+        nim,
+        faculty,
+        batch,
+        role
+      }
     });
 
   } catch (error) {
-    console.error('Registration error:', error);
+    console.error('❌ Registration error:', error);
     res.status(500).json({
       success: false,
-      message: 'Registration failed. Please try again.'
+      message: 'Registration failed. Please try again.',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 };
 
 // User login
+// backend/controllers/authController.js
 const login = async (req, res) => {
   try {
-    const { username, password } = req.body;
+    console.log('📨 Login request received:', req.body);
+    
+    const { email, password } = req.body;
 
-    if (!username || !password) {
+    // Validation
+    if (!email || !password) {
+      console.log('❌ Missing credentials');
       return res.status(400).json({
         success: false,
-        message: 'Username and password are required'
+        message: 'Email and password are required'
       });
     }
 
-    // Get user with member data
-    const result = await postgres.query(
-      `SELECT u.id, u.member_id, u.username, u.password_hash, u.role,
-              m.nim, m.full_name, m.email, m.department, m.year_joined
-       FROM users u
-       JOIN members m ON u.member_id = m.id
-       WHERE u.username = $1 AND m.status = 'active'`,
-      [username]
+    // Debug: Show all users first
+    console.log('🔍 Checking database for users...');
+    const allUsersResult = await postgres.query('SELECT username, role FROM users');
+    console.log('👥 All users:', allUsersResult.rows);
+
+    // Find user
+    console.log('🔍 Looking for user:', email.trim());
+    const userResult = await postgres.query(
+      'SELECT * FROM users WHERE username = $1',
+      [email.trim()]
     );
 
-    if (result.rows.length === 0) {
+    console.log('👤 Query result:', userResult.rows.length, 'users found');
+
+    if (userResult.rows.length === 0) {
+      console.log('❌ User not found in database');
       return res.status(401).json({
         success: false,
-        message: 'Invalid username or password'
+        message: 'Invalid email or password'
       });
     }
 
-    const user = result.rows[0];
+    const user = userResult.rows[0];
+    console.log('👤 Found user:', {
+      id: user.id,
+      username: user.username,
+      role: user.role,
+      hasPasswordHash: !!user.password_hash,
+      passwordHashLength: user.password_hash?.length
+    });
 
-    // Verify password
+    // Check password
+    console.log('🔑 Comparing passwords...');
+    console.log('🔑 Input password:', password);
+    console.log('🔑 Stored hash:', user.password_hash?.substring(0, 20) + '...');
+
     const isValidPassword = await bcrypt.compare(password, user.password_hash);
+    console.log('🔑 Password comparison result:', isValidPassword);
+
     if (!isValidPassword) {
+      console.log('❌ Password mismatch');
       return res.status(401).json({
         success: false,
-        message: 'Invalid username or password'
+        message: 'Invalid email or password'
       });
     }
 
     // Update last login
     await postgres.query(
-      'UPDATE users SET last_login = NOW() WHERE id = $1',
+      'UPDATE users SET last_login = NOW(), updated_at = NOW() WHERE id = $1',
       [user.id]
     );
 
-    // Store user in session
-    req.session.user = {
-      id: user.id,
-      memberId: user.member_id,
-      username: user.username,
-      role: user.role,
-      member: {
-        nim: user.nim,
-        fullName: user.full_name,
-        email: user.email,
-        department: user.department,
-        yearJoined: user.year_joined
-      }
-    };
+    console.log('✅ Login successful for:', user.username);
 
     res.json({
       success: true,
       message: 'Login successful',
-      user: req.session.user
+      user: {
+        id: user.id,
+        name: user.username,
+        email: user.username,
+        nim: user.member_id,
+        role: user.role
+      }
     });
 
   } catch (error) {
-    console.error('Login error:', error);
+    console.error('❌ Login error:', error);
     res.status(500).json({
       success: false,
-      message: 'Login failed. Please try again.'
+      message: 'Internal server error'
     });
   }
 };
@@ -205,3 +233,4 @@ module.exports = {
   logout,
   getProfile
 };
+

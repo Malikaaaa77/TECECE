@@ -2,20 +2,24 @@
 const express = require('express');
 const router = express.Router();
 const adminController = require('../controllers/adminController');
-const { requireAuth, requireAdmin } = require('../middleware/auth');
 
-// All admin routes require authentication and admin role
-router.use(requireAuth);
+// Import auth middleware
+const { requireAdmin } = require('../middleware/auth');
+
+// Apply admin auth middleware ke semua routes
 router.use(requireAdmin);
 
-// Admin dashboard
+// Admin routes
 router.get('/dashboard', adminController.getDashboard);
-
-// Payment approvals
-router.get('/pending-approvals', adminController.getPendingApprovals);
-router.post('/approve-payment', adminController.approvePayment);
-
-// Expense management
-router.post('/add-expense', adminController.addExpense);
+router.get('/members', adminController.getMembers);
+router.put('/members/:id/status', adminController.updateMemberStatus);
+router.delete('/members/:id', adminController.deleteMember);
+router.get('/transactions', adminController.getTransactions);
+router.post('/transactions', adminController.addTransaction);
+router.put('/transactions/:id', adminController.updateTransaction);
+router.delete('/transactions/:id', adminController.deleteTransaction);
+router.get('/payments/pending', adminController.getPendingPayments);
+router.put('/payments/:id/approve', adminController.approvePayment);
+router.put('/payments/:id/reject', adminController.rejectPayment);
 
 module.exports = router;
